@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::dot::{Direction, Dot, Point, Status};
 
 /**
@@ -7,10 +9,32 @@ pub trait DotReceiver {
     fn receive_dot(&mut self, dot: &mut Dot) -> Option<Dot>;
 }
 
-// TODO: implement DotReceiver
+type RecGrid<R> = HashMap<Point, R>;
+// TODO implement all receivers and add them to this tuple struct
+pub struct Receivers(RecGrid<Operation>, RecGrid<Ampersand>, RecGrid<Dollar>);
+impl Receivers {
+    fn new() -> Self {
+        Self(HashMap::new(), HashMap::new(), HashMap::new())
+    }
+}
+
 pub enum Axis {
     X,
     Y,
+}
+impl Axis {
+    pub fn from(b1: char, b2: char) -> Result<Self, String> {
+        const MSG: &str = "Differing brackets at ({}, {})! Must be the same for an operation";
+        if b2 as u32 != b1 as u32 + 1 {
+            return Err(MSG.to_string());
+        }
+
+        match b1 {
+            '{' => Ok(Self::X),
+            '[' => Ok(Self::Y),
+            _ => Err(MSG.to_string()),
+        }
+    }
 }
 pub struct Operation {
     axis: Axis,
@@ -142,17 +166,14 @@ impl DotReceiver for Operation {
     }
 }
 
-struct Ampersand;
+pub struct Ampersand;
 impl DotReceiver for Ampersand {
     fn receive_dot(&mut self, dot: &mut Dot) -> Option<Dot> {
-        panic!(
-            "Dot reached &, grid position: ({}, {})",
-            dot.position.x, dot.position.y
-        );
+        panic!("Dot reached & at: ({:?})", dot.position);
     }
 }
 
-struct Dollar {
+pub struct Dollar {
     message: String,
 }
 impl DotReceiver for Dollar {

@@ -1,4 +1,5 @@
 use clap::Parser;
+use dot::Point;
 use std::{fs::read_to_string, path::PathBuf};
 
 use grid::Grid;
@@ -6,7 +7,6 @@ use grid::Grid;
 mod dot;
 mod dot_receivers;
 mod grid;
-mod tokens;
 
 /**
 TODO
@@ -20,27 +20,40 @@ struct Args {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
-    let dots_content = read_to_string(args.path).expect("Couldn't find file");
+    let dots_content = match read_to_string(args.path) {
+        Ok(content) => content,
+        Err(e) => return Err(e.into()),
+    };
 
-    let mut grid_width = 0;
-    let content_lines = dots_content.lines();
-    content_lines.clone().for_each(|line| {
-        grid_width = std::cmp::max(grid_width, line.len());
-    });
-
-    let mut dots = String::new();
-    for line in content_lines {
-        let mut add_to_dots = line.to_string();
-        println!("{add_to_dots}");
-
-        while add_to_dots.len() < grid_width {
-            add_to_dots.push(' ');
-        }
-
-        add_to_dots.push('\n');
-        dots.push_str(add_to_dots.as_str());
+    let mut asciidots = Grid::parse(dots_content);
+    while asciidots.running {
+        asciidots.tick();
     }
-    let mut dots_grid = Grid::parse(dots);
 
     Ok(())
+}
+
+pub fn string_to_matrix(s: String) -> Vec<Vec<char>> {
+    let mut out = Vec::<Vec<char>>::new();
+    let lns = s.lines();
+    let mut grid_width = 0;
+    lns.clone()
+        .for_each(|line| grid_width = std::cmp::max(grid_width, line.len()));
+
+    for line in lns {
+        let mut l_vec = Vec::<char>::new();
+        for c in line.chars() {
+            l_vec.push(c);
+        }
+
+        while l_vec.len() < grid_width {
+            l_vec.push(' ');
+        }
+
+        out.push(l_vec);
+    }
+
+    out.clone().iter().for_each(|x| println!("{:#?}", x));
+
+    out
 }

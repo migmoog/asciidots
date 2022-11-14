@@ -1,67 +1,58 @@
 use crate::{
-    dot::{self, Direction, Dot, Point},
+    dot::{Direction, Dot, Point, Status},
     dot_receivers::DotReceiver,
-    tokens::TRACKS,
+    string_to_matrix,
 };
 use std::cmp::{max, min};
 
 pub struct Grid {
-    receivers: Vec<Box<dyn DotReceiver>>,
     dots: Vec<Dot>,
     ascii_art: Vec<Vec<char>>,
-    running: bool,
+    pub running: bool,
 }
 impl Grid {
     pub fn parse(s: String) -> Self {
-        println!("{s}");
-
-        // FIXME: more than one line destroys this
-        let mut out = Self {
-            // TODO: implement all receivers
-            receivers: Vec::new(),
+        Self {
             dots: Vec::new(),
-            ascii_art: Vec::new(),
+            ascii_art: string_to_matrix(s),
             running: true,
-        };
-
-        for line in s.trim_end().split('\n') {
-            let mut l_vec = Vec::new();
-            for c in line.chars() {
-                l_vec.push(c);
-            }
-            out.ascii_art.push(l_vec);
         }
-
-        out.ascii_art.iter().for_each(|v| println!("{:#?}", v));
-
-        for (y, line) in out.ascii_art.clone().iter().enumerate() {
-            for (x, c) in line.iter().enumerate() {
-                if c != &'.' {
-                    continue;
-                }
-
-                out.add_dot(Point { x, y });
-            }
-        }
-        out.dots.iter().for_each(|d| println!("{:?}", d));
-
-        out
     }
 
     pub fn tick(&mut self) {
-        for y in 0..self.ascii_art.len() {
-            for x in 0..self.ascii_art[y].len() {
-                let pos = dot::Point { x, y };
-                // TODO, locate operator at point
+        self.running = self.dots.len() > 0;
+        for i in 0..self.dots.len() {
+            if let Status::Held = self.dots[i].status {
+                self.dots.remove(i);
+            } else {
+                self.dots[i].advance();
             }
         }
 
-        for d in self.dots.iter_mut() {
-            d.advance();
-        }
+        todo!()
     }
 
-    fn add_dot(&mut self, p: Point) {
+    // TODO: will be used in main(), and Grid will no longer own receivers, they'll have their own HashMaps with points
+    pub fn receiver_check<T: DotReceiver>(
+        &mut self,
+        rec: &mut T,
+        pos: Point,
+    ) -> Result<(), String> {
+        let dot: &mut Dot;
+        match self.dots.iter_mut().find(|d| d.position == pos) {
+            Some(d) => dot = d,
+            None => return Err("No dot has reached receiver".to_string()),
+        }
+
+        let result = rec.receive_dot(dot);
+        if result.is_some() {
+            self.dots.push(result.unwrap());
+        }
+
+        Ok(())
+    }
+
+    fn setup_dot(&mut self, p: Point) {
         let direction = self.nearest_track(&p);
         if direction.is_none() {
             println!("WARNING, Dot at ({}, {}) has no track to follow", p.x, p.y);
@@ -75,23 +66,23 @@ impl Grid {
     fn nearest_track(&self, p: &Point) -> Option<Direction> {
         let above_index = max(0, p.y as i32 - 1) as usize;
         let one_above = &self.ascii_art[above_index][p.x];
-        if TRACKS.contains(one_above) && one_above == &'|' {
+        if one_above == &'|' {
             return Some(Direction::Up);
         }
         let below_index = min(self.ascii_art.len() - 1, p.y + 1);
         let one_below = &self.ascii_art[below_index][p.x];
-        if TRACKS.contains(one_below) && one_below == &'|' {
+        if one_below == &'|' {
             return Some(Direction::Down);
         }
 
         let left_index = max(0, p.x as i32 - 1) as usize;
         let one_left = &self.ascii_art[p.y][left_index];
-        if TRACKS.contains(one_left) && one_left == &'-' {
+        if one_left == &'-' {
             return Some(Direction::Left);
         }
         let right_index = min(self.ascii_art[p.y].len() - 1, p.x + 1);
         let one_right = &self.ascii_art[p.y][right_index];
-        if TRACKS.contains(one_right) && one_right == &'-' {
+        if one_right == &'-' {
             return Some(Direction::Right);
         }
 
