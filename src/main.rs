@@ -26,8 +26,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Err(e) => return Err(e.into()),
     };
 
-    let mut asciidots = Grid::parse(dots_content);
-    let recs = Receivers::new(&asciidots.ascii_art);
+    // These two variables are what make up asciidots, they work in tandem
+    let mut grid = Grid::parse(dots_content);
+    let mut recs = Receivers::new(&grid.ascii_art);
     /* while asciidots.running {
         asciidots.tick();
     } */

@@ -6,7 +6,7 @@ use crate::{
 use std::cmp::{max, min};
 
 pub struct Grid {
-    dots: Vec<Dot>,
+    pub dots: Vec<Dot>,
     pub ascii_art: Vec<Vec<char>>,
     pub running: bool,
 }
