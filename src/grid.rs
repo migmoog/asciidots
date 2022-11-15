@@ -7,7 +7,7 @@ use std::cmp::{max, min};
 
 pub struct Grid {
     dots: Vec<Dot>,
-    ascii_art: Vec<Vec<char>>,
+    pub ascii_art: Vec<Vec<char>>,
     pub running: bool,
 }
 impl Grid {
@@ -87,5 +87,36 @@ impl Grid {
         }
 
         None
+    }
+
+    pub fn surrounding_symbols(
+        map: &Vec<Vec<char>>,
+        pos: Point,
+    ) -> (Option<char>, Option<char>, Option<char>, Option<char>) {
+        let up = if pos.y <= 0 {
+            None
+        } else {
+            Some(map[pos.y - 1][pos.x])
+        };
+
+        let down = if pos.y >= map.len() - 1 {
+            None
+        } else {
+            Some(map[pos.y + 1][pos.x])
+        };
+
+        let left = if pos.x <= 0 {
+            None
+        } else {
+            Some(map[pos.y][pos.x - 1])
+        };
+
+        let right = if pos.x >= map[pos.y].len() - 1 {
+            None
+        } else {
+            Some(map[pos.y][pos.x + 1])
+        };
+
+        (up, down, left, right)
     }
 }

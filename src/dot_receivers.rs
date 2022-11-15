@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 
-use crate::dot::{Direction, Dot, Point, Status};
+use crate::{
+    dot::{Direction, Dot, Point, Status},
+    grid::Grid,
+};
 
 /**
     For any object on the grid that accepts dots and need to return another.
@@ -13,8 +16,35 @@ type RecGrid<R> = HashMap<Point, R>;
 // TODO implement all receivers and add them to this tuple struct
 pub struct Receivers(RecGrid<Operation>, RecGrid<Ampersand>, RecGrid<Dollar>);
 impl Receivers {
-    fn new() -> Self {
-        Self(HashMap::new(), HashMap::new(), HashMap::new())
+    pub fn new(map: &Vec<Vec<char>>) -> Self {
+        let mut out = Self(RecGrid::new(), RecGrid::new(), RecGrid::new());
+
+        for (y, line) in map.iter().enumerate() {
+            for (x, c) in line.iter().enumerate() {
+                let p = Point { x, y };
+
+                match *c {
+                    '{' | '[' => {
+                        let op = map[y][x + 1];
+                        let b2 = map[y][x + 2];
+
+                        out.0
+                            .insert(p, Operation::new(Axis::from(*c, b2).unwrap(), op));
+                    }
+                    '&' => {
+                        out.1.insert(p, Ampersand);
+                    }
+                    '$' => {
+                        let (direction, message) = Dollar::get_message(map, p);
+
+                        out.2.insert(p, Dollar { message, direction });
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        out
     }
 }
 
@@ -173,12 +203,80 @@ impl DotReceiver for Ampersand {
     }
 }
 
+#[derive(Debug)]
 pub struct Dollar {
     message: String,
+    direction: Direction,
+}
+impl Dollar {
+    fn get_message(map: &Vec<Vec<char>>, sign_pos: Point) -> (Direction, String) {
+        let (up, down, left, right) = Grid::surrounding_symbols(map, sign_pos);
+        let (dir, out) = 'members: {
+            let mut s = String::new();
+
+            if up.is_some() && up.unwrap() == '"' {
+                let mut y = sign_pos.y - 2;
+                while map[y][sign_pos.x] != '"' {
+                    s.push(map[y][sign_pos.x]);
+                    y -= 1;
+                }
+
+                break 'members (Direction::Up, s);
+            } else if down.is_some() && down.unwrap() == '"' {
+                let mut y = sign_pos.y + 2;
+                while map[y][sign_pos.x] != '"' {
+                    s.push(map[y][sign_pos.x]);
+                    y += 1;
+                }
+
+                break 'members (Direction::Down, s);
+            } else if left.is_some() && left.unwrap() == '"' {
+                let mut x = sign_pos.x - 2;
+                while map[sign_pos.y][x] != '"' {
+                    s.push(map[sign_pos.y][x]);
+                    x -= 1;
+                }
+
+                break 'members (Direction::Left, s);
+            } else if right.is_some() && right.unwrap() == '"' {
+                let mut x = sign_pos.x + 2;
+                while map[sign_pos.y][x] != '"' {
+                    s.push(map[sign_pos.y][x]);
+                    x += 1;
+                }
+
+                break 'members (Direction::Right, s);
+            } else {
+                panic!(
+                    "Error at ({}, {}): message either isn't prefixed with quote or dollar sign has no message to print", 
+                    sign_pos.x, sign_pos.y
+                );
+            }
+        };
+
+        println!("{}, msg", out);
+        (dir, out)
+    }
 }
 impl DotReceiver for Dollar {
-    fn receive_dot(&mut self, _dot: &mut Dot) -> Option<Dot> {
+    fn receive_dot(&mut self, dot: &mut Dot) -> Option<Dot> {
         println!("{}", self.message);
+
+        let l = self.message.len();
+        match self.direction {
+            Direction::Up => {
+                dot.position.y -= l;
+            }
+            Direction::Down => {
+                dot.position.y += l;
+            }
+            Direction::Left => {
+                dot.position.x -= l;
+            }
+            Direction::Right => {
+                dot.position.x += l;
+            }
+        }
         None
     }
 }

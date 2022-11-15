@@ -19,7 +19,7 @@ pub enum Status {
     Held,
     Moving,
 }
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 pub struct Point {
     pub x: usize,
     pub y: usize,

@@ -1,5 +1,6 @@
 use clap::Parser;
 use dot::Point;
+use dot_receivers::Receivers;
 use std::{fs::read_to_string, path::PathBuf};
 
 use grid::Grid;
@@ -26,9 +27,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let mut asciidots = Grid::parse(dots_content);
-    while asciidots.running {
+    let recs = Receivers::new(&asciidots.ascii_art);
+    /* while asciidots.running {
         asciidots.tick();
-    }
+    } */
 
     Ok(())
 }
@@ -52,8 +54,6 @@ pub fn string_to_matrix(s: String) -> Vec<Vec<char>> {
 
         out.push(l_vec);
     }
-
-    out.clone().iter().for_each(|x| println!("{:#?}", x));
 
     out
 }
