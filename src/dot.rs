@@ -45,10 +45,10 @@ impl Dot {
     }
 
     pub fn advance(&mut self) {
-        if self.status != Status::Moving {
+        if let Status::Held = self.status {
             return;
         }
-
+        // TODO: implement falling off of tracks, set status to Held if fall of or approaching edge
         match self.dir {
             Direction::Down => self.position.y += 1,
             Direction::Up => self.position.y -= 1,

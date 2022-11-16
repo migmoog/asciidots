@@ -1,7 +1,7 @@
 use crate::{
     dot::{Direction, Dot, Point, Status},
     dot_receivers::DotReceiver,
-    string_to_matrix,
+    map::{string_to_matrix, symbol_within_quote},
 };
 use std::cmp::{max, min};
 
@@ -12,11 +12,27 @@ pub struct Grid {
 }
 impl Grid {
     pub fn parse(s: String) -> Self {
-        Self {
+        let mut out = Self {
             dots: Vec::new(),
             ascii_art: string_to_matrix(s),
             running: true,
+        };
+
+        for y in 0..out.ascii_art.len() {
+            for (x, c) in out.ascii_art[y].clone().iter().enumerate() {
+                // TODO: use symbol_within_quote to check that the dots are not within output for helloworld
+                let p = Point { x, y };
+                if *c != '.' {
+                    continue;
+                } else if symbol_within_quote(&out.ascii_art, p).0 {
+                    println!("Symbol at {:?} is within quotes", p);
+                    continue;
+                }
+
+                out.setup_dot(p);
+            }
         }
+        out
     }
 
     pub fn tick(&mut self) {
@@ -28,11 +44,8 @@ impl Grid {
                 self.dots[i].advance();
             }
         }
-
-        todo!()
     }
 
-    // TODO: will be used in main(), and Grid will no longer own receivers, they'll have their own HashMaps with points
     pub fn receiver_check<T: DotReceiver>(
         &mut self,
         rec: &mut T,
@@ -87,36 +100,5 @@ impl Grid {
         }
 
         None
-    }
-
-    pub fn surrounding_symbols(
-        map: &Vec<Vec<char>>,
-        pos: Point,
-    ) -> (Option<char>, Option<char>, Option<char>, Option<char>) {
-        let up = if pos.y <= 0 {
-            None
-        } else {
-            Some(map[pos.y - 1][pos.x])
-        };
-
-        let down = if pos.y >= map.len() - 1 {
-            None
-        } else {
-            Some(map[pos.y + 1][pos.x])
-        };
-
-        let left = if pos.x <= 0 {
-            None
-        } else {
-            Some(map[pos.y][pos.x - 1])
-        };
-
-        let right = if pos.x >= map[pos.y].len() - 1 {
-            None
-        } else {
-            Some(map[pos.y][pos.x + 1])
-        };
-
-        (up, down, left, right)
     }
 }

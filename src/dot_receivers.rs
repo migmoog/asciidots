@@ -2,19 +2,25 @@ use std::collections::HashMap;
 
 use crate::{
     dot::{Direction, Dot, Point, Status},
-    grid::Grid,
+    map::surrounding_symbols,
 };
 
 /**
     For any object on the grid that accepts dots and need to return another.
 */
 pub trait DotReceiver {
-    fn receive_dot(&mut self, dot: &mut Dot) -> Option<Dot>;
+    fn receive_dot(&mut self, _dot: &mut Dot) -> Option<Dot> {
+        None
+    }
 }
 
 type RecGrid<R> = HashMap<Point, R>;
 // TODO implement all receivers and add them to this tuple struct
-pub struct Receivers(RecGrid<Operation>, RecGrid<Ampersand>, RecGrid<Dollar>);
+pub struct Receivers(
+    pub RecGrid<Operation>,
+    pub RecGrid<Ampersand>,
+    pub RecGrid<Dollar>,
+);
 impl Receivers {
     pub fn new(map: &Vec<Vec<char>>) -> Self {
         let mut out = Self(RecGrid::new(), RecGrid::new(), RecGrid::new());
@@ -197,11 +203,7 @@ impl DotReceiver for Operation {
 }
 
 pub struct Ampersand;
-impl DotReceiver for Ampersand {
-    fn receive_dot(&mut self, dot: &mut Dot) -> Option<Dot> {
-        panic!("Dot reached & at: ({:?})", dot.position);
-    }
-}
+impl DotReceiver for Ampersand {}
 
 #[derive(Debug)]
 pub struct Dollar {
@@ -210,8 +212,8 @@ pub struct Dollar {
 }
 impl Dollar {
     fn get_message(map: &Vec<Vec<char>>, sign_pos: Point) -> (Direction, String) {
-        let (up, down, left, right) = Grid::surrounding_symbols(map, sign_pos);
-        let (dir, out) = 'members: {
+        let (up, down, left, right) = surrounding_symbols(map, sign_pos);
+        let (dir, out) = {
             let mut s = String::new();
 
             if up.is_some() && up.unwrap() == '"' {
@@ -221,7 +223,7 @@ impl Dollar {
                     y -= 1;
                 }
 
-                break 'members (Direction::Up, s);
+                (Direction::Up, s)
             } else if down.is_some() && down.unwrap() == '"' {
                 let mut y = sign_pos.y + 2;
                 while map[y][sign_pos.x] != '"' {
@@ -229,7 +231,7 @@ impl Dollar {
                     y += 1;
                 }
 
-                break 'members (Direction::Down, s);
+                (Direction::Down, s)
             } else if left.is_some() && left.unwrap() == '"' {
                 let mut x = sign_pos.x - 2;
                 while map[sign_pos.y][x] != '"' {
@@ -237,7 +239,7 @@ impl Dollar {
                     x -= 1;
                 }
 
-                break 'members (Direction::Left, s);
+                (Direction::Left, s)
             } else if right.is_some() && right.unwrap() == '"' {
                 let mut x = sign_pos.x + 2;
                 while map[sign_pos.y][x] != '"' {
@@ -245,7 +247,7 @@ impl Dollar {
                     x += 1;
                 }
 
-                break 'members (Direction::Right, s);
+                (Direction::Right, s)
             } else {
                 panic!(
                     "Error at ({}, {}): message either isn't prefixed with quote or dollar sign has no message to print", 
@@ -254,7 +256,6 @@ impl Dollar {
             }
         };
 
-        println!("{}, msg", out);
         (dir, out)
     }
 }
