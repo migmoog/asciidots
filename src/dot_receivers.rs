@@ -6,8 +6,8 @@ use crate::{
 };
 
 /**
-    For any object on the grid that accepts dots and need to return another.
-*/
+For any object on the grid that accepts dots and need to return another.
+ */
 pub trait DotReceiver {
     fn receive_dot(&mut self, _dot: &mut Dot) -> Option<Dot> {
         None
@@ -15,15 +15,23 @@ pub trait DotReceiver {
 }
 
 type RecGrid<R> = HashMap<Point, R>;
+
 // TODO implement all receivers and add them to this tuple struct
 pub struct Receivers(
     pub RecGrid<Operation>,
     pub RecGrid<Ampersand>,
     pub RecGrid<Dollar>,
+    pub RecGrid<Slash>,
 );
+
 impl Receivers {
     pub fn new(map: &Vec<Vec<char>>) -> Self {
-        let mut out = Self(RecGrid::new(), RecGrid::new(), RecGrid::new());
+        let mut out = Self(
+            RecGrid::new(),
+            RecGrid::new(),
+            RecGrid::new(),
+            RecGrid::new(),
+        );
 
         for (y, line) in map.iter().enumerate() {
             for (x, c) in line.iter().enumerate() {
@@ -45,6 +53,14 @@ impl Receivers {
 
                         out.2.insert(p, Dollar { message, direction });
                     }
+                    '/' | '\\' => {
+                        out.3.insert(
+                            p,
+                            Slash {
+                                backslash: *c == '\\',
+                            },
+                        );
+                    }
                     _ => {}
                 }
             }
@@ -58,6 +74,7 @@ pub enum Axis {
     X,
     Y,
 }
+
 impl Axis {
     pub fn from(b1: char, b2: char) -> Result<Self, String> {
         const MSG: &str = "Differing brackets at ({}, {})! Must be the same for an operation";
@@ -72,6 +89,7 @@ impl Axis {
         }
     }
 }
+
 pub struct Operation {
     axis: Axis,
     horiz_dot: Option<Dot>,
@@ -89,6 +107,7 @@ impl Operation {
         }
     }
 }
+
 impl DotReceiver for Operation {
     fn receive_dot(&mut self, dot: &mut Dot) -> Option<Dot> {
         let is_vert = dot.dir.is_vertical();
@@ -203,6 +222,7 @@ impl DotReceiver for Operation {
 }
 
 pub struct Ampersand;
+
 impl DotReceiver for Ampersand {}
 
 #[derive(Debug)]
@@ -210,55 +230,54 @@ pub struct Dollar {
     message: String,
     direction: Direction,
 }
+
 impl Dollar {
     fn get_message(map: &Vec<Vec<char>>, sign_pos: Point) -> (Direction, String) {
         let (up, down, left, right) = surrounding_symbols(map, sign_pos);
-        let (dir, out) = {
-            let mut s = String::new();
 
-            if up.is_some() && up.unwrap() == '"' {
-                let mut y = sign_pos.y - 2;
-                while map[y][sign_pos.x] != '"' {
-                    s.push(map[y][sign_pos.x]);
-                    y -= 1;
-                }
+        let mut s = String::new();
 
-                (Direction::Up, s)
-            } else if down.is_some() && down.unwrap() == '"' {
-                let mut y = sign_pos.y + 2;
-                while map[y][sign_pos.x] != '"' {
-                    s.push(map[y][sign_pos.x]);
-                    y += 1;
-                }
-
-                (Direction::Down, s)
-            } else if left.is_some() && left.unwrap() == '"' {
-                let mut x = sign_pos.x - 2;
-                while map[sign_pos.y][x] != '"' {
-                    s.push(map[sign_pos.y][x]);
-                    x -= 1;
-                }
-
-                (Direction::Left, s)
-            } else if right.is_some() && right.unwrap() == '"' {
-                let mut x = sign_pos.x + 2;
-                while map[sign_pos.y][x] != '"' {
-                    s.push(map[sign_pos.y][x]);
-                    x += 1;
-                }
-
-                (Direction::Right, s)
-            } else {
-                panic!(
-                    "Error at ({}, {}): message either isn't prefixed with quote or dollar sign has no message to print", 
-                    sign_pos.x, sign_pos.y
-                );
+        if up.is_some() && up.unwrap() == '"' {
+            let mut y = sign_pos.y - 2;
+            while map[y][sign_pos.x] != '"' {
+                s.push(map[y][sign_pos.x]);
+                y -= 1;
             }
-        };
 
-        (dir, out)
+            (Direction::Up, s)
+        } else if down.is_some() && down.unwrap() == '"' {
+            let mut y = sign_pos.y + 2;
+            while map[y][sign_pos.x] != '"' {
+                s.push(map[y][sign_pos.x]);
+                y += 1;
+            }
+
+            (Direction::Down, s)
+        } else if left.is_some() && left.unwrap() == '"' {
+            let mut x = sign_pos.x - 2;
+            while map[sign_pos.y][x] != '"' {
+                s.push(map[sign_pos.y][x]);
+                x -= 1;
+            }
+
+            (Direction::Left, s)
+        } else if right.is_some() && right.unwrap() == '"' {
+            let mut x = sign_pos.x + 2;
+            while map[sign_pos.y][x] != '"' {
+                s.push(map[sign_pos.y][x]);
+                x += 1;
+            }
+
+            (Direction::Right, s)
+        } else {
+            panic!(
+                "Error at ({}, {}): message either isn't prefixed with quote or dollar sign has no message to print",
+                sign_pos.x, sign_pos.y
+            );
+        }
     }
 }
+
 impl DotReceiver for Dollar {
     fn receive_dot(&mut self, dot: &mut Dot) -> Option<Dot> {
         println!("{}", self.message);
@@ -279,5 +298,27 @@ impl DotReceiver for Dollar {
             }
         }
         None
+    }
+}
+
+pub struct Slash {
+    pub backslash: bool,
+}
+
+impl DotReceiver for Slash {
+    fn receive_dot(&mut self, dot: &mut Dot) -> Option<Dot> {
+        let mut new_dot = dot.clone();
+        // Hold it so the dot is freed from memory
+        dot.status = Status::Held;
+
+        let counter_or_clock = match dot.dir {
+            Direction::Left => self.backslash,
+            Direction::Right => !self.backslash,
+            Direction::Up => !self.backslash,
+            Direction::Down => self.backslash,
+        };
+        new_dot.dir = dot.dir.rotate(counter_or_clock);
+
+        Some(new_dot)
     }
 }

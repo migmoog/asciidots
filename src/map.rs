@@ -3,29 +3,30 @@ use std::cmp::{max, min};
 
 type AsciiArt = Vec<Vec<char>>;
 
+/// returns symbols in the order of (up, down, left, right)
 pub fn surrounding_symbols(
     map: &AsciiArt,
     pos: Point,
 ) -> (Option<char>, Option<char>, Option<char>, Option<char>) {
-    let up = if pos.y <= 0 {
+    let up = if pos.y <= 0 || map[pos.y - 1][pos.x] == ' ' {
         None
     } else {
         Some(map[pos.y - 1][pos.x])
     };
 
-    let down = if pos.y >= map.len() - 1 {
+    let down = if pos.y >= map.len() - 1 || map[pos.y + 1][pos.x] == ' ' {
         None
     } else {
         Some(map[pos.y + 1][pos.x])
     };
 
-    let left = if pos.x <= 0 {
+    let left = if pos.x <= 0 || map[pos.y][pos.x - 1] == ' ' {
         None
     } else {
         Some(map[pos.y][pos.x - 1])
     };
 
-    let right = if pos.x >= map[pos.y].len() - 1 {
+    let right = if pos.x >= map[pos.y].len() - 1 || map[pos.y][pos.x + 1] == ' ' {
         None
     } else {
         Some(map[pos.y][pos.x + 1])

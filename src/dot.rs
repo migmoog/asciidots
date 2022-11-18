@@ -12,6 +12,39 @@ impl Direction {
             &Self::Up | &Self::Down => true,
         }
     }
+
+    pub fn rotate(&self, clockwise: bool) -> Self {
+        match self {
+            &Self::Down => {
+                if clockwise {
+                    Self::Left
+                } else {
+                    Self::Right
+                }
+            }
+            &Self::Left => {
+                if clockwise {
+                    Self::Up
+                } else {
+                    Self::Down
+                }
+            }
+            &Self::Up => {
+                if clockwise {
+                    Self::Right
+                } else {
+                    Self::Left
+                }
+            }
+            &Self::Right => {
+                if clockwise {
+                    Self::Down
+                } else {
+                    Self::Up
+                }
+            }
+        }
+    }
 }
 
 #[derive(PartialEq, Clone, Debug)]
@@ -44,16 +77,43 @@ impl Dot {
         }
     }
 
-    pub fn advance(&mut self) {
+    pub fn advance(&mut self, map: &Vec<Vec<char>>) {
+        if map[self.position.y][self.position.x] == ' ' {
+            self.status = Status::Held;
+        }
         if let Status::Held = self.status {
             return;
         }
-        // TODO: implement falling off of tracks, set status to Held if fall of or approaching edge
+
         match self.dir {
-            Direction::Down => self.position.y += 1,
-            Direction::Up => self.position.y -= 1,
-            Direction::Left => self.position.x -= 1,
-            Direction::Right => self.position.x += 1,
+            Direction::Down => {
+                if self.position.y == map.len() - 1 {
+                    self.status = Status::Held;
+                } else {
+                    self.position.y += 1;
+                }
+            }
+            Direction::Up => {
+                if self.position.y == 0 {
+                    self.status = Status::Held;
+                } else {
+                    self.position.y -= 1;
+                }
+            }
+            Direction::Left => {
+                if self.position.x == 0 {
+                    self.status = Status::Held;
+                } else {
+                    self.position.x -= 1;
+                }
+            }
+            Direction::Right => {
+                if self.position.x == map[self.position.y].len() - 1 {
+                    self.status = Status::Held;
+                } else {
+                    self.position.x += 1;
+                }
+            }
         }
     }
 }

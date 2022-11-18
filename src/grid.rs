@@ -37,12 +37,16 @@ impl Grid {
 
     pub fn tick(&mut self) {
         self.running = self.dots.len() > 0;
-        for i in 0..self.dots.len() {
+        // for i in 0..self.dots.len() {
+
+        let mut i: usize = 0;
+        while i < self.dots.len() {
             if let Status::Held = self.dots[i].status {
                 self.dots.remove(i);
             } else {
-                self.dots[i].advance();
+                self.dots[i].advance(&self.ascii_art);
             }
+            i += 1;
         }
     }
 
@@ -66,7 +70,7 @@ impl Grid {
     }
 
     fn setup_dot(&mut self, p: Point) {
-        let direction = self.nearest_track(&p);
+        let direction = self.nearest_track(p);
         if direction.is_none() {
             println!("WARNING, Dot at ({}, {}) has no track to follow", p.x, p.y);
             return;
@@ -76,26 +80,26 @@ impl Grid {
         self.dots.push(d);
     }
 
-    fn nearest_track(&self, p: &Point) -> Option<Direction> {
+    fn nearest_track(&self, p: Point) -> Option<Direction> {
         let above_index = max(0, p.y as i32 - 1) as usize;
-        let one_above = &self.ascii_art[above_index][p.x];
-        if one_above == &'|' {
+        let one_above = self.ascii_art[above_index][p.x];
+        if one_above == '|' || one_above == '+' {
             return Some(Direction::Up);
         }
         let below_index = min(self.ascii_art.len() - 1, p.y + 1);
-        let one_below = &self.ascii_art[below_index][p.x];
-        if one_below == &'|' {
+        let one_below = self.ascii_art[below_index][p.x];
+        if one_below == '|' || one_below == '+' {
             return Some(Direction::Down);
         }
 
         let left_index = max(0, p.x as i32 - 1) as usize;
-        let one_left = &self.ascii_art[p.y][left_index];
-        if one_left == &'-' {
+        let one_left = self.ascii_art[p.y][left_index];
+        if one_left == '-' || one_left == '+' {
             return Some(Direction::Left);
         }
         let right_index = min(self.ascii_art[p.y].len() - 1, p.x + 1);
-        let one_right = &self.ascii_art[p.y][right_index];
-        if one_right == &'-' {
+        let one_right = self.ascii_art[p.y][right_index];
+        if one_right == '-' || one_right == '+' {
             return Some(Direction::Right);
         }
 
