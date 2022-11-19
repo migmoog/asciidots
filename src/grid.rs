@@ -37,7 +37,6 @@ impl Grid {
 
     pub fn tick(&mut self) {
         self.running = self.dots.len() > 0;
-        // for i in 0..self.dots.len() {
 
         let mut i: usize = 0;
         while i < self.dots.len() {
@@ -62,8 +61,8 @@ impl Grid {
         }
 
         let result = rec.receive_dot(dot);
-        if result.is_some() {
-            self.dots.push(result.unwrap());
+        if let Some(d) = result {
+            self.dots.push(d);
         }
 
         Ok(())
@@ -71,13 +70,13 @@ impl Grid {
 
     fn setup_dot(&mut self, p: Point) {
         let direction = self.nearest_track(p);
-        if direction.is_none() {
+        if let Some(dir) = direction {
+            let d = Dot::new(dir, p);
+            self.dots.push(d);
+        } else {
             println!("WARNING, Dot at ({}, {}) has no track to follow", p.x, p.y);
             return;
         }
-
-        let d = Dot::new(direction.unwrap(), p);
-        self.dots.push(d);
     }
 
     fn nearest_track(&self, p: Point) -> Option<Direction> {
