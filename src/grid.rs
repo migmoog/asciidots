@@ -60,8 +60,7 @@ impl Grid {
             None => return Err("No dot has reached receiver".to_string()),
         }
 
-        let result = rec.receive_dot(dot);
-        if let Some(d) = result {
+        if let Some(d) = rec.receive_dot(dot) {
             self.dots.push(d);
         }
 

@@ -282,19 +282,21 @@ impl DotReceiver for Dollar {
     fn receive_dot(&mut self, dot: &mut Dot) -> Option<Dot> {
         println!("{}", self.message);
 
-        let l = self.message.len();
-        match self.direction {
-            Direction::Up => {
-                dot.position.y -= l;
-            }
-            Direction::Down => {
-                dot.position.y += l;
-            }
-            Direction::Left => {
-                dot.position.x -= l;
-            }
-            Direction::Right => {
-                dot.position.x += l;
+        if self.direction == dot.dir {
+            let l = self.message.len();
+            match self.direction {
+                Direction::Up => {
+                    dot.position.y -= l;
+                }
+                Direction::Down => {
+                    dot.position.y += l;
+                }
+                Direction::Left => {
+                    dot.position.x -= l;
+                }
+                Direction::Right => {
+                    dot.position.x += l;
+                }
             }
         }
         None
@@ -307,18 +309,24 @@ pub struct Slash {
 
 impl DotReceiver for Slash {
     fn receive_dot(&mut self, dot: &mut Dot) -> Option<Dot> {
-        let mut new_dot = dot.clone();
-        // Hold it so the dot is freed from memory
-        dot.status = Status::Held;
-
-        let counter_or_clock = match dot.dir {
-            Direction::Left => self.backslash,
-            Direction::Right => !self.backslash,
-            Direction::Up => !self.backslash,
-            Direction::Down => self.backslash,
+        // this is refactorable but I just want it to work
+        dot.dir = if !self.backslash {
+            match dot.dir {
+                Direction::Right => Direction::Up,
+                Direction::Left => Direction::Down,
+                Direction::Down => Direction::Left,
+                Direction::Up => Direction::Right,
+            }
+        } else {
+            match dot.dir {
+                Direction::Right => Direction::Down,
+                Direction::Left => Direction::Up,
+                Direction::Down => Direction::Right,
+                Direction::Up => Direction::Left,
+            }
         };
-        new_dot.dir = dot.dir.rotate(counter_or_clock);
+        // println!("Bounced dot {:?}", dot);
 
-        Some(new_dot)
+        None
     }
 }

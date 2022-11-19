@@ -62,6 +62,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
         }
+        for (p, slash) in recs.3.iter_mut() {
+            match grid.receiver_check(slash, *p) {
+                Ok(_) => {}
+                Err(_) => {
+                    continue;
+                }
+            }
+        }
     }
 
     Ok(())

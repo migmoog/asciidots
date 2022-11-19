@@ -1,4 +1,4 @@
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Direction {
     Left,
     Right,
@@ -10,39 +10,6 @@ impl Direction {
         match self {
             &Self::Left | &Self::Right => false,
             &Self::Up | &Self::Down => true,
-        }
-    }
-
-    pub fn rotate(&self, clockwise: bool) -> Self {
-        match self {
-            &Self::Down => {
-                if clockwise {
-                    Self::Left
-                } else {
-                    Self::Right
-                }
-            }
-            &Self::Left => {
-                if clockwise {
-                    Self::Up
-                } else {
-                    Self::Down
-                }
-            }
-            &Self::Up => {
-                if clockwise {
-                    Self::Right
-                } else {
-                    Self::Left
-                }
-            }
-            &Self::Right => {
-                if clockwise {
-                    Self::Down
-                } else {
-                    Self::Up
-                }
-            }
         }
     }
 }
