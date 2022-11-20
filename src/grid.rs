@@ -49,15 +49,11 @@ impl Grid {
         }
     }
 
-    pub fn receiver_check<T: DotReceiver>(
-        &mut self,
-        rec: &mut T,
-        pos: Point,
-    ) -> Result<(), String> {
+    pub fn receiver_check<T: DotReceiver>(&mut self, rec: &mut T, pos: Point) -> Result<(), ()> {
         let dot: &mut Dot;
         match self.dots.iter_mut().find(|d| d.position == pos) {
             Some(d) => dot = d,
-            None => return Err("No dot has reached receiver".to_string()),
+            None => return Err(()),
         }
 
         if let Some(d) = rec.receive_dot(dot) {
