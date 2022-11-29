@@ -19,13 +19,13 @@ impl Grid {
         };
 
         for y in 0..out.ascii_art.len() {
-            for (x, c) in out.ascii_art[y].clone().iter().enumerate() {
-                // TODO: use symbol_within_quote to check that the dots are not within output for helloworld
+            for x in 0..out.ascii_art[y].len() {
                 let p = Point { x, y };
-                if *c != '.' {
+                if out.ascii_art[y][x] != '.' {
                     continue;
+
+                // check if period is within quote
                 } else if symbol_within_quote(&out.ascii_art, p).0 {
-                    println!("Symbol at {:?} is within quotes", p);
                     continue;
                 }
 

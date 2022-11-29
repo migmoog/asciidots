@@ -58,6 +58,7 @@ pub fn string_to_matrix(s: String) -> AsciiArt {
     out
 }
 
+// TODO: send string instead of first bool
 /// returns two bools: if the character is within quotes, and if so whether the direction is vertical or not
 pub fn symbol_within_quote(map: &AsciiArt, pos: Point) -> (bool, Option<bool>) {
     let mut first_and_last: (Option<usize>, Option<usize>) = (None, None);
@@ -80,7 +81,7 @@ pub fn symbol_within_quote(map: &AsciiArt, pos: Point) -> (bool, Option<bool>) {
     }
 
     // is it vertical?
-    if first_and_last.0.is_some() && first_and_last.1.is_some() {
+    if let (Some(top), Some(bottom)) = first_and_last {
         return (true, Some(true));
     }
     // if not then set it to nil
@@ -104,7 +105,7 @@ pub fn symbol_within_quote(map: &AsciiArt, pos: Point) -> (bool, Option<bool>) {
         }
     }
 
-    if first_and_last.0.is_some() && first_and_last.1.is_some() {
+    if let (Some(left), Some(right)) = first_and_last {
         return (true, Some(false));
     }
 
