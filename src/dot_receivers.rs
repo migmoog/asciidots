@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{
     dot::{Direction, Dot, Point, Status},
-    map::surrounding_symbols,
+    map::{get_quote, surrounding_symbols},
 };
 
 /**
@@ -233,47 +233,24 @@ pub struct Dollar {
 
 impl Dollar {
     fn get_message(map: &Vec<Vec<char>>, sign_pos: Point) -> (Direction, String) {
-        let (up, down, left, right) = surrounding_symbols(map, sign_pos);
-
-        let mut s = String::new();
-
-        if up.is_some() && up.unwrap() == '"' {
-            let mut y = sign_pos.y - 2;
-            while map[y][sign_pos.x] != '"' {
-                s.push(map[y][sign_pos.x]);
-                y -= 1;
+        match surrounding_symbols(map, sign_pos) {
+            // above character is a quote with a track below
+            [Some(('"', p)), Some(('|', _)), ..] => {
+                (Direction::Up, get_quote(map, p, Direction::Up))
+            }
+            // below character is a quote with a track above
+            [Some(('|', _)), Some(('"', p)), ..] => {
+                (Direction::Down, get_quote(map, p, Direction::Down))
+            }
+            // and the same thing horizontally
+            [_, _, Some(('-', _)), Some(('"', p))] => {
+                (Direction::Right, get_quote(map, p, Direction::Right))
+            }
+            [_, _, Some(('"', p)), Some(('-', _))] => {
+                (Direction::Left, get_quote(map, p, Direction::Left))
             }
 
-            (Direction::Up, s)
-        } else if down.is_some() && down.unwrap() == '"' {
-            let mut y = sign_pos.y + 2;
-            while map[y][sign_pos.x] != '"' {
-                s.push(map[y][sign_pos.x]);
-                y += 1;
-            }
-
-            (Direction::Down, s)
-        } else if left.is_some() && left.unwrap() == '"' {
-            let mut x = sign_pos.x - 2;
-            while map[sign_pos.y][x] != '"' {
-                s.push(map[sign_pos.y][x]);
-                x -= 1;
-            }
-
-            (Direction::Left, s)
-        } else if right.is_some() && right.unwrap() == '"' {
-            let mut x = sign_pos.x + 2;
-            while map[sign_pos.y][x] != '"' {
-                s.push(map[sign_pos.y][x]);
-                x += 1;
-            }
-
-            (Direction::Right, s)
-        } else {
-            panic!(
-                "Error at ({}, {}): message either isn't prefixed with quote or dollar sign has no message to print",
-                sign_pos.x, sign_pos.y
-            );
+            _ => unreachable!(),
         }
     }
 }

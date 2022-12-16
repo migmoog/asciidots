@@ -1,7 +1,7 @@
 use crate::{
     dot::{Direction, Dot, Point, Status},
     dot_receivers::DotReceiver,
-    map::{string_to_matrix, symbol_within_quote},
+    map::string_to_matrix,
 };
 use std::cmp::{max, min};
 
@@ -24,10 +24,10 @@ impl Grid {
                 if out.ascii_art[y][x] != '.' {
                     continue;
 
-                // check if period is within quote
-                } else if symbol_within_quote(&out.ascii_art, p).0 {
-                    continue;
-                }
+                    // loop holes, will find something else ig
+                } /* else if symbol_within_quote(&out.ascii_art, p) {
+                      continue;
+                  } */
 
                 out.setup_dot(p);
             }

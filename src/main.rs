@@ -36,16 +36,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         grid.tick();
 
-        for (p, op) in recs.0.iter_mut() {
-            match grid.receiver_check(op, *p) {
+        for (&p, op) in recs.0.iter_mut() {
+            match grid.receiver_check(op, p) {
                 Ok(_) => {}
                 Err(_) => {
                     continue;
                 }
             }
         }
-        for (p, amp) in recs.1.iter_mut() {
-            match grid.receiver_check(amp, *p) {
+        for (&p, amp) in recs.1.iter_mut() {
+            match grid.receiver_check(amp, p) {
                 Ok(_) => {
                     break 'asciidots;
                 }
@@ -54,16 +54,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
         }
-        for (p, dollar) in recs.2.iter_mut() {
-            match grid.receiver_check(dollar, *p) {
+        for (&p, dollar) in recs.2.iter_mut() {
+            match grid.receiver_check(dollar, p) {
                 Ok(_) => {}
                 Err(_) => {
                     continue;
                 }
             }
         }
-        for (p, slash) in recs.3.iter_mut() {
-            match grid.receiver_check(slash, *p) {
+        for (&p, slash) in recs.3.iter_mut() {
+            match grid.receiver_check(slash, p) {
                 Ok(_) => {}
                 Err(_) => {
                     continue;
