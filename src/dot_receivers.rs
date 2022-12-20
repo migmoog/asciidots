@@ -12,6 +12,7 @@ pub trait DotReceiver {
     fn receive_dot(&mut self, _dot: &mut Dot) -> Option<Dot> {
         None
     }
+    fn get_character(&self) -> char;
 }
 
 type RecGrid<R> = HashMap<Point, R>;
@@ -219,11 +220,22 @@ impl DotReceiver for Operation {
 
         Some(out)
     }
+
+    fn get_character(&self) -> char {
+        match self.axis {
+            Axis::X => '{',
+            Axis::Y => '[',
+        }
+    }
 }
 
 pub struct Ampersand;
 
-impl DotReceiver for Ampersand {}
+impl DotReceiver for Ampersand {
+    fn get_character(&self) -> char {
+        '&'
+    }
+}
 
 #[derive(Debug)]
 pub struct Dollar {
@@ -278,6 +290,10 @@ impl DotReceiver for Dollar {
         }
         None
     }
+
+    fn get_character(&self) -> char {
+        '$'
+    }
 }
 
 pub struct Slash {
@@ -305,5 +321,43 @@ impl DotReceiver for Slash {
         // println!("Bounced dot {:?}", dot);
 
         None
+    }
+
+    fn get_character(&self) -> char {
+        if self.backslash {
+            '\\'
+        } else {
+            '/'
+        }
+    }
+}
+
+pub struct Hashtag {
+    value: f64,
+    set: usize,
+    dir: Direction,
+}
+
+impl Hashtag {
+    fn next_to_dollar(map: &Vec<Vec<char>>, pos: Point) -> bool {
+        for sym_pair in surrounding_symbols(map, pos) {
+            if let Some(('$', _)) = sym_pair {
+                return true;
+            }
+        }
+
+        false
+    }
+}
+
+impl DotReceiver for Hashtag {
+    fn receive_dot(&mut self, dot: &mut Dot) -> Option<Dot> {
+        dot.value = self.value;
+
+        None
+    }
+
+    fn get_character(&self) -> char {
+        '#'
     }
 }
