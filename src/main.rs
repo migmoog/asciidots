@@ -1,76 +1,36 @@
-use clap::Parser;
-use dot_receivers::Receivers;
-use std::{fs::read_to_string, path::PathBuf};
+use std::{fs::File, io::Read};
 
-use grid::Grid;
-
-mod dot;
-mod dot_receivers;
 mod grid;
-mod map;
+mod dot;
+mod context;
 
-/**
-TODO
-Arguments I want to add:
-* --d/--draw: draw the dots on a map with an amount of ticks to sleep between each step
-*/
-#[derive(Parser)]
-struct Args {
-    path: PathBuf,
+#[derive(Debug)]
+enum StartError {
+    NonexistentFile,
+    CouldntRead,
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let args = Args::parse();
-    let dots_content = match read_to_string(args.path) {
-        Ok(content) => content,
-        Err(e) => return Err(e.into()),
+fn lex_grid(grid: Vec<u8>, width: usize, height: usize) {
+
+}
+
+fn main() -> Result<(), StartError> {
+    let args: Vec<String> = std::env::args().collect();
+    let mut src_file = match File::open(&args[0]) {
+        Ok(f) => f,
+        Err(_) => return Err(StartError::NonexistentFile)
     };
 
-    // These two variables are what make up asciidots, they work in tandem
-    let mut grid = Grid::parse(dots_content);
-    let mut recs = Receivers::new(&grid.ascii_art);
-    'asciidots: loop {
-        if !grid.running {
-            break 'asciidots;
-        }
-
-        grid.tick();
-
-        for (&p, op) in recs.0.iter_mut() {
-            match grid.receiver_check(op, p) {
-                Ok(_) => {}
-                Err(_) => {
-                    continue;
-                }
-            }
-        }
-        for (&p, amp) in recs.1.iter_mut() {
-            match grid.receiver_check(amp, p) {
-                Ok(_) => {
-                    break 'asciidots;
-                }
-                Err(_) => {
-                    continue;
-                }
-            }
-        }
-        for (&p, dollar) in recs.2.iter_mut() {
-            match grid.receiver_check(dollar, p) {
-                Ok(_) => {}
-                Err(_) => {
-                    continue;
-                }
-            }
-        }
-        for (&p, slash) in recs.3.iter_mut() {
-            match grid.receiver_check(slash, p) {
-                Ok(_) => {}
-                Err(_) => {
-                    continue;
-                }
-            }
-        }
+    let mut grid: Vec<u8> = Vec::new();
+    if let Err(_) = src_file.read_to_end(&mut grid) {
+        return Err(StartError::CouldntRead);
     }
+
+    let width = grid.iter()
+        .position(|&r| r == '\n' as u8)
+        .unwrap_or_else(|| grid.len());
+    grid = grid.into_iter().filter(|&r| r != '\n' as u8).collect();
+    let height = grid.len() / width;
 
     Ok(())
 }
