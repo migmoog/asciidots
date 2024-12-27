@@ -1,6 +1,7 @@
 use std::{fs::File, io::Read};
 
 mod grid;
+mod receivers;
 mod dot;
 mod context;
 
